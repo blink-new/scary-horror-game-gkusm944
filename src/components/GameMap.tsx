@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Ghost, Key, Book, Flashlight, DoorOpen, Skull } from 'lucide-react'
+import { Ghost, Key, Book, Flashlight, DoorOpen, Skull, Cat } from 'lucide-react'
 
 export type CellType = 'empty' | 'wall' | 'item' | 'exit' | 'scare'
 
@@ -18,6 +18,7 @@ export interface Player {
 interface GameMapProps {
   map: MapCell[][]
   player: Player
+  monster: Player
   inventory: string[]
   onMove: (dx: number, dy: number) => void
   onGrab: () => void
@@ -28,7 +29,7 @@ const cellIcons: Record<string, React.ReactNode> = {
   'key': <Key className="text-yellow-300" />, 'book': <Book className="text-purple-400" />, 'flashlight': <Flashlight className="text-blue-300" />
 }
 
-export const GameMap: React.FC<GameMapProps> = ({ map, player, inventory, onMove, onGrab, jumpScare }) => {
+export const GameMap: React.FC<GameMapProps> = ({ map, player, monster, inventory, onMove, onGrab, jumpScare }) => {
   const gridRef = useRef<HTMLDivElement>(null)
 
   // Keyboard controls
@@ -65,17 +66,19 @@ export const GameMap: React.FC<GameMapProps> = ({ map, player, inventory, onMove
           </motion.div>
         )}
       </AnimatePresence>
-      <div ref={gridRef} className="grid grid-cols-7 grid-rows-7 gap-1 w-full h-full bg-black/80 rounded-lg border-2 border-red-900 shadow-2xl overflow-hidden">
+      <div ref={gridRef} className="grid grid-cols-11 grid-rows-11 gap-1 w-full h-full bg-black/80 rounded-lg border-2 border-red-900 shadow-2xl overflow-hidden">
         {map.map((row, y) => row.map((cell, x) => {
           const isPlayer = player.x === x && player.y === y
+          const isMonster = monster.x === x && monster.y === y
           let content: React.ReactNode = null
           if (isPlayer) content = <motion.div layoutId="player" className="w-full h-full flex items-center justify-center"><Ghost className="text-white drop-shadow-lg" size={32} /></motion.div>
+          else if (isMonster) content = <motion.div layoutId="monster" className="w-full h-full flex items-center justify-center"><Cat className="text-red-600 drop-shadow-lg" size={32} /></motion.div>
           else if (cell.type === 'item' && cell.item && !inventory.includes(cell.item)) content = <span>{cellIcons[cell.item] || <Book />}</span>
           else if (cell.type === 'exit') content = <DoorOpen className="text-green-400" />
           else if (cell.type === 'wall') content = <div className="w-full h-full bg-gray-900 border border-gray-700 rounded" />
           else if (cell.type === 'scare') content = <span />
           return (
-            <div key={x + '-' + y} className={`relative w-full h-full flex items-center justify-center transition-all duration-200 ${isPlayer ? 'bg-red-900/60' : 'bg-black/60'} ${cell.type === 'wall' ? 'shadow-inner' : ''}`}
+            <div key={x + '-' + y} className={`relative w-full h-full flex items-center justify-center transition-all duration-200 ${isPlayer ? 'bg-red-900/60' : isMonster ? 'bg-red-900/60' : 'bg-black/60'} ${cell.type === 'wall' ? 'shadow-inner' : ''}`}
               style={{ borderRadius: 6, border: cell.type === 'exit' ? '2px solid #22c55e' : undefined }}>
               {content}
             </div>
